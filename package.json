@@ -24,5 +24,8 @@
     "*.js": [
       "eslint"
     ]
+  },
+  "dependencies": {
+    "dotenv-defaults": "^2.0.2"
   }
 }
