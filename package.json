@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "Set of scripts to help with JS code automated analysis",
   "scripts": {
-  },
-  "dependencies": {
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/eslint-parser": "^7.14.4",
+    "eslint": "^7.28.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-node-cjs-extension": "^0.0.1"
   },
   "author": "mark.ablov@gmail.com",
   "license": "ISC",
