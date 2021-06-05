@@ -1,0 +1,16 @@
+{
+  "name": "js-code-analyzer",
+  "version": "1.0.0",
+  "description": "Set of scripts to help with JS code automated analysis",
+  "scripts": {
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  },
+  "author": "mark.ablov@gmail.com",
+  "license": "ISC",
+  "engines": {
+    "node": "^14.16.0"
+  }
+}
