@@ -48,5 +48,6 @@ module.exports = {
       },
     ],
     'node-cjs-extension/require-cjs-extension': ['error', 'always'],
+    'import/extensions': 'off',
   },
 };
