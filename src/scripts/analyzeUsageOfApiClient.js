@@ -9,7 +9,7 @@ const babelParser = require('@babel/parser');
 
 const { listOrgRepos, getFileContent, downloadArchive } = require('../services/githubService.js');
 const { runInParallel } = require('../workers/promisePool.js');
-const { findAllVariablesForRequiredModule } = require('../workers/ASTWorker.js');
+const { findAllUsageForModuleMethods } = require('../workers/ASTWorker.js');
 
 const ORGANIZATION = 'motorway';
 const TASKS_CONCURRENCY = 5;
@@ -95,19 +95,18 @@ const analyzeJSFile = (fileName, stats) => {
     },
   );
 
-  const { variables, requires } = findAllVariablesForRequiredModule(ast, 'motorway-api-client');
-  if (!variables?.length) {
-    return;
-  }
+  const { mentions } = findAllUsageForModuleMethods(
+    ast,
+    (requiredPath) => {
+      const requiredPathParts = requiredPath.split('/');
+      // actual clients are placed on the root of module, so path should be 'motorway-api-client/some-client'
+      return requiredPathParts[0] === 'motorway-api-client' && requiredPathParts.length === 2;
+    },
+  );
 
-  // sanity check, we want to be sure that we have recognized all requires for 'motorway-api-client'
-  const apiClientStrOccurrences = sourceCode.split('motorway-api-client');
-  const mocksApiClient = apiClientStrOccurrences.reduce((acc, s) => (s.endsWith('jest.mock(\'') ? acc + 1 : acc), 0);
-  if (apiClientStrOccurrences.length - 1 - mocksApiClient !== requires.length) {
-    throw Error('Something strange. String "motorway-api-client" appears more times than require() calls.');
-  }
-
-  requires.forEach((requirePath) => stats.apiClientsInUse.add(requirePath));
+  mentions.filter(({ type }) => type === 'unknown').forEach(({ name, position: { line, column } }) => (
+    stats.warnings.push(`Couldn't recognize usage type for ${name} at ${fileName} ${line}:${column}`)
+  ));
 };
 
 /*
