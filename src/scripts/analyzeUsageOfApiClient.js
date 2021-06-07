@@ -84,7 +84,7 @@ const listAllJSFiles = (directory) => {
 /*
  * Analyze single file
  */
-const analyzeJSFile = (fileName) => {
+const analyzeJSFile = (fileName, stats) => {
   const sourceCode = fs.readFileSync(fileName, 'utf8');
   const ast = babelParser.parse(
     sourceCode,
@@ -106,6 +106,8 @@ const analyzeJSFile = (fileName) => {
   if (apiClientStrOccurrences.length - 1 - mocksApiClient !== requires.length) {
     throw Error('Something strange. String "motorway-api-client" appears more times than require() calls.');
   }
+
+  requires.forEach((requirePath) => stats.apiClientsInUse.add(requirePath));
 };
 
 /*
@@ -155,6 +157,7 @@ const main = async () => {
     reposChecked: 0,
     reposHavePackageJson: 0,
     reposUseApiClient: 0,
+    apiClientsInUse: new Set(),
   };
 
   await runInParallel(
