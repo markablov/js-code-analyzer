@@ -33,6 +33,11 @@ const analyzeRepoSource = async (repo) => {
   const packageJson = await getPackageJsonForRepo(repo);
   if (!packageJson) {
     console.log(`[-] skipping ${repo}: no package.json`);
+    return;
+  }
+
+  if (!Object.keys(packageJson.dependencies).includes('motorway-api-client')) {
+    console.log(`[-] skipping ${repo}: there is no dependency on api-client`);
   }
 };
 
