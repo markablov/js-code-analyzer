@@ -157,7 +157,7 @@ const main = async () => {
     reposChecked: 0,
     reposHavePackageJson: 0,
     reposUseApiClient: 0,
-    apiClientsInUse: new Set(),
+    warnings: [],
   };
 
   await runInParallel(
@@ -166,6 +166,8 @@ const main = async () => {
     analyzeRepoSource,
     [stats],
   );
+
+  console.log(stats);
 };
 
 main().catch((err) => {
