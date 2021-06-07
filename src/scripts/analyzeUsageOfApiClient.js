@@ -5,9 +5,11 @@ require('dotenv-defaults/config');
 const fs = require('fs');
 const path = require('path');
 const unzipper = require('unzipper');
+const babelParser = require('@babel/parser');
 
 const { listOrgRepos, getFileContent, downloadArchive } = require('../services/githubService.js');
 const { runInParallel } = require('../workers/promisePool.js');
+const { findAllVariablesForRequiredModule } = require('../workers/ASTWorker.js');
 
 const ORGANIZATION = 'motorway';
 const TASKS_CONCURRENCY = 5;
@@ -82,7 +84,28 @@ const listAllJSFiles = (directory) => {
 /*
  * Analyze single file
  */
-const analyzeJSFile = () => {
+const analyzeJSFile = (fileName) => {
+  const sourceCode = fs.readFileSync(fileName, 'utf8');
+  const ast = babelParser.parse(
+    sourceCode,
+    {
+      allowReturnOutsideFunction: true,
+      sourceType: 'unambiguous',
+      plugins: ['jsx', 'exportDefaultFrom'],
+    },
+  );
+
+  const { variables, requires } = findAllVariablesForRequiredModule(ast, 'motorway-api-client');
+  if (!variables?.length) {
+    return;
+  }
+
+  // sanity check, we want to be sure that we have recognized all requires for 'motorway-api-client'
+  const apiClientStrOccurrences = sourceCode.split('motorway-api-client');
+  const mocksApiClient = apiClientStrOccurrences.reduce((acc, s) => (s.endsWith('jest.mock(\'') ? acc + 1 : acc), 0);
+  if (apiClientStrOccurrences.length - 1 - mocksApiClient !== requires.length) {
+    throw Error('Something strange. String "motorway-api-client" appears more times than require() calls.');
+  }
 };
 
 /*
@@ -105,8 +128,15 @@ const analyzeRepoSource = async (repo, stats) => {
   const repoDir = await downloadAndUnzip(repo);
   const jsFiles = listAllJSFiles(repoDir);
   for (const jsFile of jsFiles) {
-    analyzeJSFile(jsFile);
+    try {
+      analyzeJSFile(jsFile, stats);
+    } catch (err) {
+      err.fileName = jsFile;
+      throw err;
+    }
   }
+
+  console.log(`[+] analyzed ${repo}`);
 };
 
 const main = async () => {
