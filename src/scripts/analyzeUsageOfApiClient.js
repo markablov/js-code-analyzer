@@ -66,14 +66,14 @@ const downloadAndUnzip = async (repo) => {
 /*
  * Get list of all JS files from directory
  */
-const listAllJSFiles = (directory) => {
+const listAllNonTestJSFiles = (directory) => {
   const jsFiles = [];
 
   for (const fileName of fs.readdirSync(directory)) {
     const filePath = path.join(directory, fileName);
     if (fs.statSync(filePath).isDirectory()) {
-      jsFiles.push(...listAllJSFiles(filePath));
-    } else if (fileName.endsWith('.js')) {
+      jsFiles.push(...listAllNonTestJSFiles(filePath));
+    } else if (fileName.endsWith('.js') && !fileName.endsWith('.test.js')) {
       jsFiles.push(filePath);
     }
   }
@@ -128,7 +128,7 @@ const analyzeRepoSource = async (repo, stats) => {
   stats.reposUseApiClient++;
 
   const repoDir = await downloadAndUnzip(repo);
-  const jsFiles = listAllJSFiles(repoDir);
+  const jsFiles = listAllNonTestJSFiles(repoDir);
   for (const jsFile of jsFiles) {
     try {
       analyzeJSFile(jsFile, stats);
