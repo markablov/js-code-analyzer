@@ -1,6 +1,9 @@
 const { Octokit } = require('@octokit/rest');
+const { request: githubRequest } = require('@octokit/request');
 
-const client = new Octokit({ auth: process.env.GITHUB_PERSONAL_ACCESS_TOKEN });
+const TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
+
+const client = new Octokit({ auth: TOKEN });
 
 const PAGINATED_REQUEST_URLS = new Set([
   'https://api.github.com/orgs/motorway/repos',
@@ -41,7 +44,20 @@ const getFileContent = ({ organization, repo, path }) => (
   client.repos.getContent({ owner: organization, repo, path })
 );
 
+/*
+ * Download whole archive for repo
+ */
+const downloadArchive = ({ organization, repo }) => githubRequest(
+  'GET /repos/{org}/{repo}/zipball',
+  {
+    headers: { authorization: `token ${TOKEN}` },
+    org: organization,
+    repo,
+  },
+);
+
 module.exports = {
+  downloadArchive,
   getFileContent,
   listOrgRepos,
 };
