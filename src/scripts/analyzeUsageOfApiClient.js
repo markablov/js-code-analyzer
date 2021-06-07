@@ -95,7 +95,7 @@ const analyzeJSFile = (fileName, stats) => {
     },
   );
 
-  const { mentions } = findAllUsageForModuleMethods(
+  const { calls, mentions } = findAllUsageForModuleMethods(
     ast,
     (requiredPath) => {
       const requiredPathParts = requiredPath.split('/');
@@ -106,6 +106,12 @@ const analyzeJSFile = (fileName, stats) => {
 
   mentions.filter(({ type }) => type === 'unknown').forEach(({ name, position: { line, column } }) => (
     stats.warnings.push(`Couldn't recognize usage type for ${name} at ${fileName} ${line}:${column}`)
+  ));
+
+  stats.apiClientTotalCalls++;
+
+  calls.filter(({ args }) => args.length > 1).forEach(({ method, position: { line, column } }) => (
+    stats.warnings.push(`API client call with more than 1 argument. ${method} at ${fileName} ${line}:${column}`)
   ));
 };
 
@@ -156,6 +162,7 @@ const main = async () => {
     reposChecked: 0,
     reposHavePackageJson: 0,
     reposUseApiClient: 0,
+    apiClientTotalCalls: 0,
     warnings: [],
   };
 
