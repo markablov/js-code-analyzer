@@ -4,8 +4,7 @@
 const executeNextQueuedPromise = (queue, running, resolve, reject, fn, commonArgs) => {
   const { id, args = [] } = queue.shift();
   const promise = fn(id, ...args, ...commonArgs);
-  running[id] = promise;
-  promise.then(() => {
+  const promiseWithRejectionHandler = promise.then(() => {
     delete running[id];
     if (queue.length) {
       // queue next job
@@ -20,6 +19,8 @@ const executeNextQueuedPromise = (queue, running, resolve, reject, fn, commonArg
     // it could be multiple rejects, it does not matter much which one would be first
     Promise.all(Object.values(running).filter((sibling) => sibling !== promise)).then(() => reject(err));
   });
+
+  running[id] = promiseWithRejectionHandler;
 };
 
 /*
