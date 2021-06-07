@@ -26,7 +26,9 @@
     ]
   },
   "dependencies": {
+    "@octokit/request": "^5.5.0",
     "@octokit/rest": "^18.5.6",
-    "dotenv-defaults": "^2.0.2"
+    "dotenv-defaults": "^2.0.2",
+    "unzipper": "^0.10.11"
   }
 }
