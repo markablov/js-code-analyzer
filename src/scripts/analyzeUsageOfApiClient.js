@@ -4,12 +4,14 @@ require('dotenv-defaults/config');
 
 const fs = require('fs');
 const path = require('path');
+const unzipper = require('unzipper');
 
-const { listOrgRepos, getFileContent } = require('../services/githubService.js');
+const { listOrgRepos, getFileContent, downloadArchive } = require('../services/githubService.js');
 const { runInParallel } = require('../workers/promisePool.js');
 
 const ORGANIZATION = 'motorway';
 const TASKS_CONCURRENCY = 5;
+const ZIP_EXTRACT_CONCURRENCY = 5;
 
 const temporaryFolder = path.resolve(__dirname, 'tempFiles');
 
@@ -27,6 +29,37 @@ const getPackageJsonForRepo = async (repo) => {
 };
 
 /*
+ * Remove top directory from archive
+ */
+const excludeRootDirectoryFromZip = (archive) => {
+  const rootDir = archive.files.reduce(
+    (shortest, { path: zipPath }) => (shortest && (shortest.length < zipPath.length) ? shortest : zipPath),
+    null,
+  );
+
+  archive.files.forEach((file) => {
+    file.path = file.path.replace(rootDir, '');
+  });
+};
+
+/*
+ * Download whole repository
+ */
+const downloadAndUnzip = async (repo) => {
+  const repoDir = path.join(temporaryFolder, repo);
+  if (fs.existsSync(repoDir)) {
+    return;
+  }
+  fs.mkdirSync(repoDir);
+
+  const { data: arrayBuffer } = await downloadArchive({ organization: ORGANIZATION, repo });
+  const data = new Uint8Array(arrayBuffer);
+  const archive = await unzipper.Open.buffer(data);
+  excludeRootDirectoryFromZip(archive);
+  await archive.extract({ path: repoDir, concurrency: ZIP_EXTRACT_CONCURRENCY });
+};
+
+/*
  * Main worker for repo analysis
  */
 const analyzeRepoSource = async (repo) => {
@@ -38,7 +71,10 @@ const analyzeRepoSource = async (repo) => {
 
   if (!Object.keys(packageJson.dependencies).includes('motorway-api-client')) {
     console.log(`[-] skipping ${repo}: there is no dependency on api-client`);
+    return;
   }
+
+  await downloadAndUnzip(repo);
 };
 
 const main = async () => {
