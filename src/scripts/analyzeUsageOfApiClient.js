@@ -48,7 +48,7 @@ const excludeRootDirectoryFromZip = (archive) => {
 const downloadAndUnzip = async (repo) => {
   const repoDir = path.join(temporaryFolder, repo);
   if (fs.existsSync(repoDir)) {
-    return;
+    return repoDir;
   }
   fs.mkdirSync(repoDir);
 
@@ -57,6 +57,32 @@ const downloadAndUnzip = async (repo) => {
   const archive = await unzipper.Open.buffer(data);
   excludeRootDirectoryFromZip(archive);
   await archive.extract({ path: repoDir, concurrency: ZIP_EXTRACT_CONCURRENCY });
+
+  return repoDir;
+};
+
+/*
+ * Get list of all JS files from directory
+ */
+const listAllJSFiles = (directory) => {
+  const jsFiles = [];
+
+  for (const fileName of fs.readdirSync(directory)) {
+    const filePath = path.join(directory, fileName);
+    if (fs.statSync(filePath).isDirectory()) {
+      jsFiles.push(...listAllJSFiles(filePath));
+    } else if (fileName.endsWith('.js')) {
+      jsFiles.push(filePath);
+    }
+  }
+
+  return jsFiles;
+};
+
+/*
+ * Analyze single file
+ */
+const analyzeJSFile = () => {
 };
 
 /*
@@ -74,7 +100,11 @@ const analyzeRepoSource = async (repo) => {
     return;
   }
 
-  await downloadAndUnzip(repo);
+  const repoDir = await downloadAndUnzip(repo);
+  const jsFiles = listAllJSFiles(repoDir);
+  for (const jsFile of jsFiles) {
+    analyzeJSFile(jsFile);
+  }
 };
 
 const main = async () => {
