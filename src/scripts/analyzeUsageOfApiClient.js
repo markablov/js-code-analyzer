@@ -135,4 +135,10 @@ const main = async () => {
   );
 };
 
-main().catch((err) => console.error(err));
+main().catch((err) => {
+  console.log(err.stack);
+  const extraInfo = Object.entries(err);
+  for (const [key, value] of extraInfo) {
+    console.log(`  ${key} = ${JSON.stringify(value)}`);
+  }
+});
