@@ -26,6 +26,8 @@
     ]
   },
   "dependencies": {
+    "@babel/parser": "^7.14.4",
+    "@babel/traverse": "^7.14.2",
     "@octokit/request": "^5.5.0",
     "@octokit/rest": "^18.5.6",
     "dotenv-defaults": "^2.0.2",
