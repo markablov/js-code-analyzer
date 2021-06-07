@@ -128,7 +128,12 @@ const findAllUsageForModuleMethods = (ast, moduleNameChecker) => {
       if (callee.type === 'Identifier') {
         const variable = variables.get(callee.name);
         if (variable) {
-          calls.push({ module: variable.module, method: variable.name, args: node.arguments });
+          calls.push({
+            module: variable.module,
+            method: variable.name,
+            args: node.arguments,
+            position: node.loc.start,
+          });
         }
         return;
       }
@@ -137,7 +142,12 @@ const findAllUsageForModuleMethods = (ast, moduleNameChecker) => {
       if (callee.type === 'MemberExpression' && callee.object.type === 'Identifier') {
         const variable = variables.get(callee.object.name);
         if (variable && callee.property.type === 'Identifier') {
-          calls.push({ module: variable.module, method: callee.property.name, args: node.arguments });
+          calls.push({
+            module: variable.module,
+            method: callee.property.name,
+            args: node.arguments,
+            position: node.loc.start,
+          });
         }
       }
     },
